@@ -1,11 +1,19 @@
 version: 2.1
-executors:
-  my-executor:
-    docker:
-      - image: cimg/ruby:3.0.3-browsers
 
 jobs:
-  my-job:
-    executor: my-executor
+  build:
+    docker:
+      - image: cimg/ruby:3.2.2
     steps:
-      - run: echo "Hello executor!"
+      - checkout
+      - run: ruby --version
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # build and push Docker image
+      - run: |
+          TAG=0.1.$CIRCLE_BUILD_NUM
+          docker build -t circleci-public/circleci-app-on-ci:$TAG .
+          echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+          docker push circleci-public/circleci-app-on-ci:$TAG
